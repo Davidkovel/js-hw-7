@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Домашня практика</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    .fade-out {
+      opacity: 0;
+      transition: opacity 1s ease-out;
+    }
+    label {
+      display: block;
+      margin: 5px 0;
+    }
+    input {
+      padding: 5px;
+      margin: 3px 0 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h2 id="pageTitle">Вітаємо, Guest!</h2>
+
+  <!-- Перемикач мови -->
+  <button id="langSwitch">EN</button>
+  <div id="langMessage" style="color: green; font-weight: bold;"></div>
+
+  <hr>
+
+  <!-- Міні-форма -->
+  <form id="registerForm">
+    <label id="loginLabel">Логін:
+      <input type="text" id="login" required>
+    </label>
+    <label id="emailLabel">Email:
+      <input type="email" id="email" required>
+    </label>
+    <label id="passwordLabel">Пароль:
+      <input type="password" id="password" required>
+    </label>
+    <label>
+      <input type="checkbox" id="rememberMe"> <span id="rememberLabel">Запам'ятати мене</span>
+    </label>
+    <button type="submit" id="registerBtn">Зареєструватися</button>
+  </form>
+
+  <div id="greeting" style="font-weight: bold; margin-top: 10px;"></div>
+
+  <hr>
+
+  <!-- Очистка -->
+  <button id="clearData">Очистити всі дані</button>
+
+  <script>
+    const translations = {
+      ua: {
+        title: "Вітаємо, Guest!",
+        login: "Логін:",
+        email: "Email:",
+        password: "Пароль:",
+        remember: "Запам'ятати мене",
+        register: "Зареєструватися",
+        langBtn: "EN",
+        langMsg: "Мова змінена",
+        greet: (login) => `Привіт, ${login}!`
+      },
+      en: {
+        title: "Welcome, Guest!",
+        login: "Login:",
+        email: "Email:",
+        password: "Password:",
+        remember: "Remember me",
+        register: "Register",
+        langBtn: "UA",
+        langMsg: "Language changed",
+        greet: (login) => `Hello, ${login}!`
+      }
+    };
+
+    const pageTitle = document.getElementById("pageTitle");
+    const langSwitch = document.getElementById("langSwitch");
+    const langMessage = document.getElementById("langMessage");
+    const registerForm = document.getElementById("registerForm");
+    const loginInput = document.getElementById("login");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const rememberMe = document.getElementById("rememberMe");
+    const greeting = document.getElementById("greeting");
+    const clearDataBtn = document.getElementById("clearData");
+
+    const loginLabel = document.getElementById("loginLabel");
+    const emailLabel = document.getElementById("emailLabel");
+    const passwordLabel = document.getElementById("passwordLabel");
+    const rememberLabel = document.getElementById("rememberLabel");
+    const registerBtn = document.getElementById("registerBtn");
+
+    function applyLanguage(lang) {
+      const t = translations[lang];
+      pageTitle.textContent = t.title;
+      loginLabel.firstChild.textContent = t.login;
+      emailLabel.firstChild.textContent = t.email;
+      passwordLabel.firstChild.textContent = t.password;
+      rememberLabel.textContent = t.remember;
+      registerBtn.textContent = t.register;
+      langSwitch.textContent = t.langBtn;
+    }
+
+    let currentLang = localStorage.getItem("lang") || "ua";
+    applyLanguage(currentLang);
+
+    langSwitch.addEventListener("click", () => {
+      currentLang = currentLang === "ua" ? "en" : "ua";
+      localStorage.setItem("lang", currentLang);
+      applyLanguage(currentLang);
+      langMessage.textContent = translations[currentLang].langMsg;
+      setTimeout(() => { langMessage.textContent = ""; }, 3000);
+    });
+
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days*24*60*60*1000));
+      document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+    }
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
+    }
+    function deleteAllCookies() {
+      document.cookie.split(";").forEach(cookie => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      });
+    }
+
+    registerForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const login = loginInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!login || !email || !password) {
+        alert("Заповніть усі поля!");
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Некоректний email!");
+        return;
+      }
+      if (password.length < 8) {
+        alert("Пароль має містити мінімум 8 символів!");
+        return;
+      }
+
+      if (rememberMe.checked) {
+        setCookie("login", login, 7);
+      }
+
+      greeting.textContent = translations[currentLang].greet(login);
+      loginInput.value = "";
+      emailInput.value = "";
+      passwordInput.value = "";
+      rememberMe.checked = false;
+    });
+
+    const savedLogin = getCookie("login");
+    if (savedLogin) {
+      greeting.textContent = translations[currentLang].greet(savedLogin);
+    }
+
+    clearDataBtn.addEventListener("click", () => {
+      document.body.classList.add("fade-out");
+      setTimeout(() => {
+        localStorage.clear();
+        deleteAllCookies();
+        currentLang = "ua";
+        applyLanguage(currentLang);
+        greeting.textContent = "";
+        pageTitle.textContent = translations.ua.title;
+        document.body.classList.remove("fade-out");
+        alert("Дані очищено! Ви увійшли як Guest.");
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
